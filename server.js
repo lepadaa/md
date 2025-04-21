@@ -12,10 +12,15 @@ const BASE_URL = 'https://api.modash.io/v1';
 
 app.post('/search', async (req, res) => {
   try {
-    const { platform, ...rest } = req.body;
+    const { platform, ...payload } = req.body;
+
+    if (!platform || !payload.filters) {
+      return res.status(400).json({ error: 'Missing platform or filters.' });
+    }
+
     const endpoint = `${BASE_URL}/${platform}/search`;
 
-    const response = await axios.post(endpoint, rest, {
+    const response = await axios.post(endpoint, payload, {
       headers: {
         Authorization: `Bearer ${MODASH_API_KEY}`,
         'Content-Type': 'application/json',
@@ -24,12 +29,11 @@ app.post('/search', async (req, res) => {
 
     res.status(200).json(response.data);
   } catch (err) {
-    console.error('Error from Modash:', err.response?.data || err.message);
+    console.error('🔥 Error from Modash:', err.response?.data || err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-
 app.listen(3000, () => {
-  console.log('✅ Modash Proxy running on http://localhost:3000');
+  console.log('✅ Modash Proxy is live at http://localhost:3000');
 });
