@@ -20,8 +20,8 @@ app.post('/search', async (req, res) => {
 
     const endpoint = `${BASE_URL}/${platform}/search`;
 
-    // Send the filters object as the body
-    const response = await axios.post(endpoint, filters, {
+    // Flatten filters into the root of the request body
+    const response = await axios.post(endpoint, { ...filters }, {
       headers: {
         Authorization: `Bearer ${MODASH_API_KEY}`,
         'Content-Type': 'application/json',
@@ -36,5 +36,5 @@ app.post('/search', async (req, res) => {
 });
 
 app.listen(3000, () => {
-  console.log('✅ Modash Proxy running on http://localhost:3000');
+  console.log('✅ Modash Proxy running at http://localhost:3000');
 });
