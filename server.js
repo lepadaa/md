@@ -45,7 +45,8 @@ app.get('/lookup', async (req, res) => {
       return res.status(400).json({ error: 'Missing platform or username' });
     }
 
-    const endpoint = `${BASE_URL}/${platform}/profile?username=${encodeURIComponent(username)}`;
+    const endpoint = `https://api.modash.io/v1/${platform}/profile?username=${encodeURIComponent(username)}`;
+    console.log("🔗 Final request URL:", endpoint);
 
     const response = await axios.get(endpoint, {
       headers: {
@@ -56,10 +57,15 @@ app.get('/lookup', async (req, res) => {
 
     res.status(200).json(response.data);
   } catch (err) {
+    if (err.response && err.response.status === 404) {
+      return res.status(404).json({ message: `No profile found for @${req.query.username}` });
+    }
+
     console.error('🔥 Modash lookup error:', err.response?.data || err.message);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
 app.listen(3000, () => {
