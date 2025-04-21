@@ -1,73 +1,50 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
-require('dotenv').config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const MODASH_API_KEY = process.env.MODASH_API_KEY;
-const BASE_URL = 'https://api.modash.io/v1';
+const MODASH_API_BASE = "https://api.modash.io/v1";
+const MODASH_API_KEY = process.env.MODASH_API_KEY; // Render Environment Variables
 
+// Endpoint to fetch influencer data from Modash
+app.get('/influencer/:username', async (req, res) => {
+  const username = req.params.username;
+
+  try {
+    const response = await axios.get(`${MODASH_API_BASE}/influencers/${username}`, {
+      headers: {
+        Authorization: `Bearer ${MODASH_API_KEY}`,
+      },
+    });
+    res.status(200).json(response.data);
+  } catch (error) {
+    console.error(error);
+    res.status(error.response?.status || 500).json({ error: error.message });
+  }
+});
+
+// Endpoint to search influencers using detailed filters
 app.post('/search', async (req, res) => {
+  const searchFilters = req.body;
+
   try {
-    const { platform, filters } = req.body;
-
-    if (!platform || !filters) {
-      return res.status(400).json({ error: 'Missing platform or filters.' });
-    }
-
-    const endpoint = `${BASE_URL}/${platform}/search`;
-
-    // 🔍 LOG TO VERIFY PAYLOAD
-    console.log('🔍 Final Modash POST payload:', JSON.stringify(filters, null, 2));
-
-    const response = await axios.post(endpoint, { ...filters }, {
+    const response = await axios.post(`${MODASH_API_BASE}/influencers/search`, searchFilters, {
       headers: {
         Authorization: `Bearer ${MODASH_API_KEY}`,
         'Content-Type': 'application/json',
-      }
+      },
     });
-
     res.status(200).json(response.data);
-  } catch (err) {
-    console.error('🔥 Modash API error:', err.response?.data || err.message);
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    console.error(error);
+    res.status(error.response?.status || 500).json({ error: error.message });
   }
 });
 
-app.get('/lookup', async (req, res) => {
-  try {
-    const { platform, username } = req.query;
-
-    if (!platform || !username) {
-      return res.status(400).json({ error: 'Missing platform or username' });
-    }
-
-    const endpoint = `https://api.modash.io/v1/${platform}/profile?username=${encodeURIComponent(username)}`;
-    console.log("🔗 Final request URL:", endpoint);
-
-    const response = await axios.get(endpoint, {
-      headers: {
-        Authorization: `Bearer ${MODASH_API_KEY}`,
-        'Content-Type': 'application/json',
-      }
-    });
-
-    res.status(200).json(response.data);
-  } catch (err) {
-    if (err.response && err.response.status === 404) {
-      return res.status(404).json({ message: `No profile found for @${req.query.username}` });
-    }
-
-    console.error('🔥 Modash lookup error:', err.response?.data || err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-
-app.listen(3000, () => {
-  console.log('✅ Modash Proxy running on http://localhost:3000');
+const port = process.env.PORT || 10000;
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
